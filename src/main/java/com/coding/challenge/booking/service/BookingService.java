@@ -2,6 +2,7 @@ package com.coding.challenge.booking.service;
 
 import com.coding.challenge.booking.entity.BookingEntity;
 import com.coding.challenge.booking.input.BookingInput;
+import com.coding.challenge.booking.mapper.BookingMapper;
 import com.coding.challenge.booking.output.BookingOutput;
 import com.coding.challenge.booking.persistance.BookingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,10 +15,12 @@ public class BookingService {
     private BookingRepository bookingRepository;
 
     public BookingOutput createBooking(BookingInput input) {
-        BookingEntity entity = bookingRepository.findAll().get(0); //TODO: add logic
+        BookingEntity entity = BookingMapper.INSTANCE.mapInputToEntity(input);
 
-        BookingOutput output = new BookingOutput();
-        output.setBookingId(String.valueOf(entity.getId()));
+        BookingEntity responseEntity = bookingRepository.saveAndFlush(entity);
+
+        BookingOutput output = new BookingOutput(); // TODO put this in mapper
+        output.setBookingId(String.valueOf(responseEntity.getId()));
         return output;
     }
 }

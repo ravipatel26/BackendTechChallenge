@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class BookingExceptionHandler {
 
+    // TODO: proper validation error handling
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorOutput> handleGenericException(Exception e) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorOutput(e.getMessage()));
