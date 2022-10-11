@@ -14,8 +14,7 @@ public class BookingService {
     private BookingRepository bookingRepository;
 
     public BookingOutput createBooking(BookingInput input) {
-
-        BookingEntity entity = bookingRepository.findAll().get(0);
+        BookingEntity entity = bookingRepository.findAll().get(0); //TODO: add logic
 
         BookingOutput output = new BookingOutput();
         output.setBookingId(String.valueOf(entity.getId()));
