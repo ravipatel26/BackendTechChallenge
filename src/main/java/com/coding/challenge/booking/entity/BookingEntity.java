@@ -1,8 +1,6 @@
 package com.coding.challenge.booking.entity;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -30,4 +28,6 @@ public class BookingEntity {
 
     @Column(name = "departure_date")
     private LocalDate departureDate;
+
+    // TODO: optimistic locking https://www.baeldung.com/jpa-optimistic-locking
 }
