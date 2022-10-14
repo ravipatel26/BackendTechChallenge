@@ -8,7 +8,11 @@ import com.coding.challenge.booking.persistance.BookingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,5 +54,18 @@ public class BookingService {
             new RuntimeException("fix me"); // TODO: add exception if not found
         }
         bookingRepository.deleteById(id);
+    }
+
+    public List<LocalDate> getAvailableDates(LocalDate startDate, LocalDate endDate) {
+        List<LocalDate> availableDates = startDate.datesUntil(endDate).collect(Collectors.toList());
+        List<BookingEntity> reservedDates = bookingRepository.getAllBookedDatesBetween(startDate, endDate);
+        Set<LocalDate> dates = new HashSet<>();
+        for (BookingEntity entity : reservedDates) {
+            dates.addAll(entity.getArrivalDate().datesUntil(entity.getDepartureDate()).collect(Collectors.toList()));
+        }
+
+        availableDates.removeAll(new ArrayList<>(dates));
+
+        return availableDates;
     }
 }
