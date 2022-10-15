@@ -11,6 +11,6 @@ import java.util.List;
 @Repository
 public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
 
-    @Query("select b from booking b where b.arrivalDate >= ?1 and b.departureDate < ?2")
+    @Query("select b from booking b where b.arrivalDate >= ?1 or b.departureDate <= ?2")
     List<BookingEntity> getAllBookedDatesBetween(LocalDate startDate, LocalDate endDate);
 }

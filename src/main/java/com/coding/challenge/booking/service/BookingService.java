@@ -23,8 +23,12 @@ public class BookingService {
 
     // TODO transactional if multiple calls in a method?
     public BookingOutput createBooking(BookingInput input) {
+        if (!areBookingDatesAvailable(input)) {
+            throw new RuntimeException("booking dates not available");
+        }
+
         BookingEntity entity = BookingMapper.INSTANCE.mapInputToEntity(input);
-        BookingEntity responseEntity = bookingRepository.save(entity); //TODO: before save check if available
+        BookingEntity responseEntity = bookingRepository.save(entity);
         return BookingMapper.INSTANCE.mapEntityToOutput(responseEntity);
     }
 
@@ -33,6 +37,10 @@ public class BookingService {
     }
 
     public BookingOutput updateBooking(long id, BookingInput input) { // todo should return 200 only?
+        if (!areBookingDatesAvailable(input)) {
+            throw new RuntimeException("booking dates not available");
+        }
+
         BookingEntity entity = bookingRepository.findById(id).orElseThrow(() -> new RuntimeException("fix me")); // TODO: add exception if not found
         entity.setEmail(input.getEmail());
         entity.setFirstName(input.getFirstName());
@@ -67,5 +75,10 @@ public class BookingService {
         availableDates.removeAll(new ArrayList<>(dates));
 
         return availableDates;
+    }
+
+    private boolean areBookingDatesAvailable(BookingInput input) {
+        List<LocalDate> availableDates = getAvailableDates(input.getArrivalDate(), input.getDepartureDate());
+        return availableDates != null && new HashSet<>(availableDates).containsAll(input.getArrivalDate().datesUntil(input.getDepartureDate()).collect(Collectors.toList()));
     }
 }
