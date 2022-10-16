@@ -26,7 +26,7 @@ public class BookingValidator {
         validateLastName(input.getLastName(), errors);
         validateEmail(input.getEmail(), errors);
         validateArrivalDate(input.getArrivalDate(), errors);
-        validateDepartureDate(input.getDepartureDate(), errors); // TODO: what is date is not in right format?
+        validateDepartureDate(input.getDepartureDate(), errors);
 
         if (errors.isEmpty()) {
             validateDateConstraint(input.getArrivalDate(), input.getDepartureDate(), errors);
