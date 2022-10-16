@@ -1,8 +1,10 @@
 package com.coding.challenge.booking.controller;
 
+import com.coding.challenge.booking.error.exception.BookingValidationException;
 import com.coding.challenge.booking.input.BookingInput;
 import com.coding.challenge.booking.output.BookingOutput;
 import com.coding.challenge.booking.service.BookingService;
+import com.coding.challenge.booking.validation.BookingValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -21,8 +23,12 @@ public class BookingController {
     @Autowired
     private BookingService bookingService;
 
+    @Autowired
+    private BookingValidator bookingValidator;
+
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<BookingOutput> createBooking(@Valid @RequestBody BookingInput input) { //TODO: response entity instead for status code?
+    public ResponseEntity<BookingOutput> createBooking(@Valid @RequestBody BookingInput input) throws Exception {
+        bookingValidator.validateInput(input);
         return new ResponseEntity<>(bookingService.createBooking(input), HttpStatus.CREATED);
     }
 
@@ -32,17 +38,18 @@ public class BookingController {
     }
 
     @PutMapping(path = "/{id}")
-    public ResponseEntity<BookingOutput> updateBooking(@PathVariable long id, @Valid @RequestBody BookingInput input) {
+    public ResponseEntity<BookingOutput> updateBooking(@PathVariable long id, @Valid @RequestBody BookingInput input) throws Exception {
+        bookingValidator.validateInput(input);
         return new ResponseEntity<>(bookingService.updateBooking(id, input), HttpStatus.OK);
     }
 
     @GetMapping(path = "/{id}")
-    public ResponseEntity<BookingOutput> getBooking(@PathVariable long id) {
+    public ResponseEntity<BookingOutput> getBooking(@PathVariable long id) throws Exception {
         return new ResponseEntity<>(bookingService.getBooking(id), HttpStatus.OK);
     }
 
     @DeleteMapping(path = "/{id}")
-    public ResponseEntity<Void> deleteBooking(@PathVariable long id) {
+    public ResponseEntity<Void> deleteBooking(@PathVariable long id) throws Exception {
         bookingService.deleteBooking(id);
         return ResponseEntity.noContent().build();
     }
@@ -50,9 +57,7 @@ public class BookingController {
 
     @GetMapping(path = "/availabilities")
     public ResponseEntity<List<LocalDate>> getAvailableDates(@RequestParam(value = "startDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-                                                             @RequestParam(value = "endDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
-
-        // TODO: what if start and end dates are in the past?
+                                                             @RequestParam(value = "endDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) throws Exception {
         if (startDate == null) {
             startDate = LocalDate.now();
         }
@@ -61,10 +66,7 @@ public class BookingController {
             endDate = startDate.plusMonths(1);
         }
 
-        if (startDate.isAfter(endDate)) {
-            throw new RuntimeException("start date cannot be after edn date"); //TODO: fix this exception
-        }
-
+        bookingValidator.validateAvailabilitiesDate(startDate, endDate);
         return new ResponseEntity<>(bookingService.getAvailableDates(startDate, endDate), HttpStatus.OK);
     }
 }

@@ -1,6 +1,9 @@
 package com.coding.challenge.booking.service;
 
 import com.coding.challenge.booking.entity.BookingEntity;
+import com.coding.challenge.booking.error.exception.BookingNotFoundException;
+import com.coding.challenge.booking.error.exception.BookingSavingException;
+import com.coding.challenge.booking.error.exception.BookingValidationException;
 import com.coding.challenge.booking.input.BookingInput;
 import com.coding.challenge.booking.mapper.BookingMapper;
 import com.coding.challenge.booking.output.BookingOutput;
@@ -8,11 +11,9 @@ import com.coding.challenge.booking.persistance.BookingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.OptimisticLockException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,45 +22,52 @@ public class BookingService {
     @Autowired
     private BookingRepository bookingRepository;
 
-    // TODO transactional if multiple calls in a method?
-    public BookingOutput createBooking(BookingInput input) {
+    public BookingOutput createBooking(BookingInput input) throws Exception {
         if (!areBookingDatesAvailable(input)) {
             throw new RuntimeException("booking dates not available");
         }
 
-        BookingEntity entity = BookingMapper.INSTANCE.mapInputToEntity(input);
-        BookingEntity responseEntity = bookingRepository.save(entity);
-        return BookingMapper.INSTANCE.mapEntityToOutput(responseEntity);
+        try {
+            BookingEntity entity = BookingMapper.INSTANCE.mapInputToEntity(input);
+            BookingEntity responseEntity = bookingRepository.save(entity);
+            return BookingMapper.INSTANCE.mapEntityToOutput(responseEntity);
+        } catch (OptimisticLockException e) {
+            throw new Exception("Unable to complete booking creation. Please try again.");
+        }
     }
 
     public List<BookingOutput> getAllBookings() {
         return bookingRepository.findAll().stream().map(BookingMapper.INSTANCE::mapEntityToOutput).collect(Collectors.toList());
     }
 
-    public BookingOutput updateBooking(long id, BookingInput input) { // todo should return 200 only?
+    public BookingOutput updateBooking(long id, BookingInput input) throws Exception {
         if (!areBookingDatesAvailable(input)) {
-            throw new RuntimeException("booking dates not available");
+            throw new BookingValidationException(List.of("Booking dates not available"));
         }
 
-        BookingEntity entity = bookingRepository.findById(id).orElseThrow(() -> new RuntimeException("fix me")); // TODO: add exception if not found
+        BookingEntity entity = bookingRepository.findById(id).orElseThrow(BookingNotFoundException::new);
         entity.setEmail(input.getEmail());
         entity.setFirstName(input.getFirstName());
         entity.setLastName(input.getLastName());
         entity.setArrivalDate(input.getArrivalDate());
         entity.setDepartureDate(input.getDepartureDate());
 
-        BookingEntity responseEntity = bookingRepository.save(entity); //TODO: before save check if available
+        try {
+            BookingEntity responseEntity = bookingRepository.save(entity);
+            return BookingMapper.INSTANCE.mapEntityToOutput(responseEntity);
+        } catch (OptimisticLockException e) {
+            throw new BookingSavingException();
+        }
+    }
+
+    public BookingOutput getBooking(long id) throws Exception {
+        BookingEntity responseEntity = bookingRepository.findById(id).orElseThrow(BookingNotFoundException::new);
         return BookingMapper.INSTANCE.mapEntityToOutput(responseEntity);
     }
 
-    public BookingOutput getBooking(long id) {
-        BookingEntity responseEntity = bookingRepository.findById(id).orElseThrow(() -> new RuntimeException("fix me")); // TODO: add exception if not found
-        return BookingMapper.INSTANCE.mapEntityToOutput(responseEntity);
-    }
-
-    public void deleteBooking(long id) {
+    public void deleteBooking(long id) throws Exception {
         if (!bookingRepository.existsById(id)) {
-            new RuntimeException("fix me"); // TODO: add exception if not found
+            throw new BookingNotFoundException();
         }
         bookingRepository.deleteById(id);
     }
