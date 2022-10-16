@@ -13,6 +13,7 @@ public abstract class BookingMapper {
     public static final BookingMapper INSTANCE = Mappers.getMapper(BookingMapper.class);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "version", ignore = true)
     public abstract BookingEntity mapInputToEntity(BookingInput input);
 
     @Mapping(source = "id", target = "bookingId")

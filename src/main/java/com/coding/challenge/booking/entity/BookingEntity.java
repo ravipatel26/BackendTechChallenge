@@ -29,5 +29,6 @@ public class BookingEntity {
     @Column(name = "departure_date")
     private LocalDate departureDate;
 
-    // TODO: optimistic locking https://www.baeldung.com/jpa-optimistic-locking
+    @Version
+    private Long version;
 }
