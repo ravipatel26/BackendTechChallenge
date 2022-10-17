@@ -41,11 +41,12 @@ public class BookingService {
     }
 
     public BookingOutput updateBooking(long id, BookingInput input) throws Exception {
-        if (!areBookingDatesAvailable(input)) {
+        BookingEntity entity = bookingRepository.findById(id).orElseThrow(BookingNotFoundException::new);
+
+        if (!areBookingDatesAvailableToUpdate(input, entity)) {
             throw new BookingValidationException(List.of("Booking dates not available"));
         }
 
-        BookingEntity entity = bookingRepository.findById(id).orElseThrow(BookingNotFoundException::new);
         entity.setEmail(input.getEmail());
         entity.setFirstName(input.getFirstName());
         entity.setLastName(input.getLastName());
@@ -88,5 +89,11 @@ public class BookingService {
     private boolean areBookingDatesAvailable(BookingInput input) {
         List<LocalDate> availableDates = getAvailableDates(input.getArrivalDate(), input.getDepartureDate());
         return availableDates != null && new HashSet<>(availableDates).containsAll(input.getArrivalDate().datesUntil(input.getDepartureDate()).collect(Collectors.toList()));
+    }
+
+    private boolean areBookingDatesAvailableToUpdate(BookingInput newInput, BookingEntity oldEntity) {
+        List<LocalDate> availableDates = getAvailableDates(newInput.getArrivalDate(), newInput.getDepartureDate());
+        availableDates.addAll(oldEntity.getArrivalDate().datesUntil(oldEntity.getDepartureDate()).collect(Collectors.toList()));
+        return availableDates != null && new HashSet<>(availableDates).containsAll(newInput.getArrivalDate().datesUntil(newInput.getDepartureDate()).collect(Collectors.toList()));
     }
 }
