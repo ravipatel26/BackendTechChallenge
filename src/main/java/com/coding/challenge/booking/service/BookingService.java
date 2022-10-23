@@ -24,7 +24,7 @@ public class BookingService {
 
     public BookingOutput createBooking(BookingInput input) throws Exception {
         if (!areBookingDatesAvailable(input)) {
-            throw new RuntimeException("booking dates not available");
+            throw new BookingValidationException(List.of("Booking dates not available"));
         }
 
         try {
@@ -32,7 +32,7 @@ public class BookingService {
             BookingEntity responseEntity = bookingRepository.save(entity);
             return BookingMapper.INSTANCE.mapEntityToOutput(responseEntity);
         } catch (OptimisticLockException e) {
-            throw new Exception("Unable to complete booking creation. Please try again.");
+            throw new BookingSavingException();
         }
     }
 

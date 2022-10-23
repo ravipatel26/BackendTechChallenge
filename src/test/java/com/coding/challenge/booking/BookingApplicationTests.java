@@ -2,6 +2,7 @@ package com.coding.challenge.booking;
 
 import com.coding.challenge.booking.input.BookingInput;
 import com.coding.challenge.booking.output.BookingOutput;
+import com.coding.challenge.booking.output.ErrorOutput;
 import com.coding.challenge.booking.persistance.BookingRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
@@ -18,8 +19,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.time.LocalDate;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -44,7 +44,7 @@ class BookingApplicationTests {
 	}
 
 	@Test
-	public void test_create_endpoint() throws Exception {
+	public void post_createBooking_shouldReturn201() throws Exception {
 		BookingInput input = getBookingInput();
 		MvcResult response = mockMvc.perform(post(ENDPOINT).content(jsonMapper.writeValueAsString(input)).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isCreated())
@@ -59,7 +59,19 @@ class BookingApplicationTests {
 	}
 
 	@Test
-	public void test_update_endpoint() throws Exception {
+	public void post_createBookingWithInvalidPayload_shouldReturn400() throws Exception {
+		BookingInput input = getBookingInput();
+		input.setFirstName(null);
+		MvcResult response = mockMvc.perform(post(ENDPOINT).content(jsonMapper.writeValueAsString(input)).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isBadRequest())
+				.andReturn();
+		ErrorOutput output = jsonMapper.readValue(response.getResponse().getContentAsString(), ErrorOutput.class);
+		assertNotNull(output.getErrorMessages());
+		assertEquals("First name cannot be blank", output.getErrorMessages().get(0));
+	}
+
+	@Test
+	public void put_updateBooking_shouldReturn200() throws Exception {
 		BookingInput input = getBookingInput();
 		MvcResult createResponse = mockMvc.perform(post(ENDPOINT).content(jsonMapper.writeValueAsString(input)).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isCreated())
@@ -84,7 +96,29 @@ class BookingApplicationTests {
 	}
 
 	@Test
-	public void test_get_endpoint() throws Exception {
+	public void put_updateBookingWithInvalidPayload_shouldReturn400() throws Exception {
+		BookingInput input = getBookingInput();
+		input.setFirstName(null);
+		MvcResult response = mockMvc.perform(put(ENDPOINT + "/" + "1").content(jsonMapper.writeValueAsString(input)).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isBadRequest())
+				.andReturn();
+		ErrorOutput output = jsonMapper.readValue(response.getResponse().getContentAsString(), ErrorOutput.class);
+		assertNotNull(output.getErrorMessages());
+		assertEquals("First name cannot be blank", output.getErrorMessages().get(0));
+	}
+
+	@Test
+	public void put_updateBookingWithInvalidId_shouldReturn404() throws Exception {
+		BookingInput input = getBookingInput();
+		MvcResult response = mockMvc.perform(put(ENDPOINT + "/" + "12345").content(jsonMapper.writeValueAsString(input)).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isNotFound())
+				.andReturn();
+		ErrorOutput output = jsonMapper.readValue(response.getResponse().getContentAsString(), ErrorOutput.class);
+		assertEquals("Booking not found", output.getErrorMessage());
+	}
+
+	@Test
+	public void get_getBookingById_shouldReturn200() throws Exception {
 		BookingInput input = getBookingInput();
 		MvcResult createResponse = mockMvc.perform(post(ENDPOINT).content(jsonMapper.writeValueAsString(input)).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isCreated())
@@ -105,7 +139,16 @@ class BookingApplicationTests {
 	}
 
 	@Test
-	public void test_delete_endpoint() throws Exception {
+	public void get_getBookingWithWrongId_shouldReturn404() throws Exception {
+		MvcResult response = mockMvc.perform(get(ENDPOINT + "/" + "12345").contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isNotFound())
+				.andReturn();
+		ErrorOutput output = jsonMapper.readValue(response.getResponse().getContentAsString(), ErrorOutput.class);
+		assertEquals("Booking not found", output.getErrorMessage());
+	}
+
+	@Test
+	public void delete_deletedBookingById_shouldReturn204() throws Exception {
 		BookingInput input = getBookingInput();
 		MvcResult response = mockMvc.perform(post(ENDPOINT).content(jsonMapper.writeValueAsString(input)).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isCreated())
@@ -118,7 +161,16 @@ class BookingApplicationTests {
 	}
 
 	@Test
-	public void test_get_all_endpoint() throws Exception {
+	public void delete_deletedBookingWithInvalidId_shouldReturn404() throws Exception {
+		MvcResult response = mockMvc.perform(delete(ENDPOINT + "/" + "12345"))
+				.andExpect(status().isNotFound())
+				.andReturn();
+		ErrorOutput output = jsonMapper.readValue(response.getResponse().getContentAsString(), ErrorOutput.class);
+		assertEquals("Booking not found", output.getErrorMessage());
+	}
+
+	@Test
+	public void get_allBookingsWhenNoBookings_shouldReturn200() throws Exception {
 		MvcResult getResponse = mockMvc.perform(get(ENDPOINT).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
 				.andReturn();
@@ -127,6 +179,30 @@ class BookingApplicationTests {
 		List<BookingOutput> output = jsonMapper.readValue(response, typeReference);
 
 		assertNotNull(output);
+		assertTrue(output.isEmpty());
+	}
+
+	@Test
+	public void get_allBookingsWithOneBooking_shouldReturn200() throws Exception {
+		BookingInput input = getBookingInput();
+		mockMvc.perform(post(ENDPOINT).content(jsonMapper.writeValueAsString(input)).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isCreated())
+				.andReturn();
+
+		MvcResult getResponse = mockMvc.perform(get(ENDPOINT).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk())
+				.andReturn();
+		String response = getResponse.getResponse().getContentAsString();
+		CollectionType typeReference = TypeFactory.defaultInstance().constructCollectionType(List.class, BookingOutput.class);
+		List<BookingOutput> getOutput = jsonMapper.readValue(response, typeReference);
+
+		assertNotNull(getOutput);
+		assertFalse(getOutput.isEmpty());
+		assertEquals(input.getFirstName(), getOutput.get(0).getFirstName());
+		assertEquals(input.getLastName(), getOutput.get(0).getLastName());
+		assertEquals(input.getEmail(), getOutput.get(0).getEmail());
+		assertEquals(input.getArrivalDate(), getOutput.get(0).getArrivalDate());
+		assertEquals(input.getDepartureDate(), getOutput.get(0).getDepartureDate());
 	}
 
 	private BookingInput getBookingInput() {

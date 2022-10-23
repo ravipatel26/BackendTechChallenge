@@ -55,8 +55,6 @@ public class BookingExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorOutput> handleGenericException(Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorOutput(e.getMessage(), null));
-
-        //return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorOutput("Unable to process booking request", null));
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorOutput("Unable to process booking request", null));
     }
 }
