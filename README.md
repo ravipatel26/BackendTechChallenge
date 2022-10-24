@@ -1,8 +1,9 @@
 # Reservation System
 
 ## Setup
-This service uses MySQL as a database as defined in application.properties
-Replace the following values with correct values
+This service uses MySQL as a database as defined in [application.properties](https://github.com/ravipatel26/ReservationSystem/blob/testing_service/src/main/resources/application.properties).
+
+Replace the following values with correct values:
 ```
 spring.datasource.url=jdbc:mysql://{URL}:{PORT}/booking
 spring.datasource.username={USERNAME}
@@ -17,10 +18,10 @@ The reservation service had the following endpoints
 - **GET /v1/booking/{id}** This endpoint will fetch a booking by id
 - **GET /v1/booking** This endpoint will fetch all bookings
 
-Sample postman collection with input and outputs to the service can be found here
+The Postman collection for these endpoints with input payloads to the service can be found [here](https://github.com/ravipatel26/ReservationSystem/blob/testing_service/src/test/resources/postman_collection/Booking.postman_collection.json)
 
 ## Load testing
 This section contains two tests scripts
 
-- **load_test.sh** which does a quick and basic laod testing
-- **perf_test.jmx** which does a performance test using Jmeter
+- **[load_test.sh](https://github.com/ravipatel26/ReservationSystem/blob/testing_service/src/test/resources/load_testing/load_test.sh)** which does a quick and basic load testing
+- **[perf_test.jmx](https://github.com/ravipatel26/ReservationSystem/blob/testing_service/src/test/resources/load_testing/perf_test.jmx)** which does a performance test using Jmeter
